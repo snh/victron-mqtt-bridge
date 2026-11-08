@@ -6,6 +6,7 @@ class Settings(BaseSettings):
 
     victron_mqtt_host: str
     victron_mqtt_use_ssl: bool = False
+    victron_mqtt_verify_ssl: bool = True
     keepalive_interval_seconds: int = 60
 
     # JSON-encoded mapping of Victron relative paths to downstream topics.
@@ -31,7 +32,13 @@ class Settings(BaseSettings):
             "Configuration",
             "─────────────────────────────────────────",
             f"  Victron broker   : {self.victron_mqtt_host}:{self.victron_mqtt_port}"
-            + (" (SSL)" if self.victron_mqtt_use_ssl else ""),
+            + (
+                " (SSL)"
+                if self.victron_mqtt_use_ssl and self.victron_mqtt_verify_ssl
+                else " (SSL, certificate verification disabled)"
+                if self.victron_mqtt_use_ssl
+                else ""
+            ),
             f"  Keepalive        : every {self.keepalive_interval_seconds}s",
             "  Downstream broker: "
             f"{self.downstream_mqtt_host}:{self.downstream_mqtt_port}"

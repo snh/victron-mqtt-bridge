@@ -1,14 +1,40 @@
+import ssl
+
 import pytest
 
 from tests.fakes.fake_mqtt_publisher import FakeMqttPublisher
 from victron_mqtt_bridge.client.publisher import MqttPublisher
-from victron_mqtt_bridge.client.victron_mqtt_client import resolve_downstream_topic
+from victron_mqtt_bridge.client.victron_mqtt_client import (
+    create_victron_tls_parameters,
+    resolve_downstream_topic,
+)
 
 SERIAL = "abc123def456"
 MAPPING = {
     "battery/0/Soc": "home/battery/soc",
     "system/0/Ac/Grid/L1/Power": "home/grid/l1/power",
 }
+
+
+# ---------------------------------------------------------------------------
+# TLS configuration
+# ---------------------------------------------------------------------------
+
+
+def test_should_not_create_tls_parameters_when_ssl_is_disabled() -> None:
+    assert create_victron_tls_parameters(use_ssl=False, verify_ssl=False) is None
+
+
+def test_should_verify_certificates_when_ssl_verification_is_enabled() -> None:
+    tls_parameters = create_victron_tls_parameters(use_ssl=True, verify_ssl=True)
+    assert tls_parameters is not None
+    assert tls_parameters.cert_reqs is None
+
+
+def test_should_disable_certificate_verification_when_configured() -> None:
+    tls_parameters = create_victron_tls_parameters(use_ssl=True, verify_ssl=False)
+    assert tls_parameters is not None
+    assert tls_parameters.cert_reqs == ssl.CERT_NONE
 
 
 # ---------------------------------------------------------------------------

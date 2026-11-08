@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import ssl
 
 import aiomqtt
 
@@ -79,6 +80,17 @@ def resolve_downstream_topic(
 # ---------------------------------------------------------------------------
 
 
+def create_victron_tls_parameters(
+    use_ssl: bool,
+    verify_ssl: bool,
+) -> aiomqtt.TLSParameters | None:
+    if not use_ssl:
+        return None
+    if not verify_ssl:
+        return aiomqtt.TLSParameters(cert_reqs=ssl.CERT_NONE)
+    return aiomqtt.TLSParameters()
+
+
 class VictronMqttClient:
     """Connects to a Victron Cerbo GX MQTT broker, discovers the device serial,
     maintains a keep-alive, and bridges mapped telemetry topics to a downstream
@@ -96,8 +108,9 @@ class VictronMqttClient:
         self._topic_mapping = topic_mapping
 
     async def connect(self) -> None:
-        tls_params = (
-            aiomqtt.TLSParameters() if self._settings.victron_mqtt_use_ssl else None
+        tls_params = create_victron_tls_parameters(
+            self._settings.victron_mqtt_use_ssl,
+            self._settings.victron_mqtt_verify_ssl,
         )
         async with aiomqtt.Client(
             hostname=self._settings.victron_mqtt_host,

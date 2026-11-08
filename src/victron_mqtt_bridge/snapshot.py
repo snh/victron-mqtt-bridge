@@ -20,6 +20,7 @@ import click
 
 from victron_mqtt_bridge.client.victron_mqtt_client import (
     VICTRON_DATA_PREFIX_TEMPLATE,
+    create_victron_tls_parameters,
     discover_serial,
     send_keepalive,
 )
@@ -61,12 +62,13 @@ def _apply_depth(node: object, depth: int | None) -> object:
 async def _collect(
     host: str,
     use_ssl: bool,
+    verify_ssl: bool,
     topics: tuple[str, ...],
     timeout: float,
 ) -> dict[str, object]:
     """Connect to the Victron broker, subscribe to topics, and collect messages."""
     port = 8883 if use_ssl else 1883
-    tls_params = aiomqtt.TLSParameters() if use_ssl else None
+    tls_params = create_victron_tls_parameters(use_ssl, verify_ssl)
     results: dict[str, object] = {}
 
     async with aiomqtt.Client(hostname=host, port=port, tls_params=tls_params) as client:
@@ -107,6 +109,14 @@ async def _collect(
     help="Use TLS/SSL on port 8883 (default: plain MQTT on port 1883).",
 )
 @click.option(
+    "--no-verify-ssl",
+    "verify_ssl",
+    is_flag=True,
+    flag_value=False,
+    default=True,
+    help="Disable Victron TLS certificate verification.",
+)
+@click.option(
     "--topic",
     "topics",
     multiple=True,
@@ -144,6 +154,7 @@ async def _collect(
 def snapshot(
     host: str,
     use_ssl: bool,
+    verify_ssl: bool,
     topics: tuple[str, ...],
     timeout: float,
     output: Path | None,
@@ -157,7 +168,7 @@ def snapshot(
     The output contains the latest value seen for each topic during that window.
     """
     logging.basicConfig(level=logging.WARNING, stream=sys.stderr)
-    flat = asyncio.run(_collect(host, use_ssl, topics, timeout))
+    flat = asyncio.run(_collect(host, use_ssl, verify_ssl, topics, timeout))
     tree = _apply_depth(_to_tree(flat), depth)
     serialised = json.dumps(tree, indent=2, sort_keys=True) + "\n"
 

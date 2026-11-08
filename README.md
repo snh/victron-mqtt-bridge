@@ -80,6 +80,7 @@ All settings are read from environment variables or a `.env` file in the project
 |---|---|---|---|
 | `VICTRON_MQTT_HOST` | Yes | n/a | IP or hostname of the Cerbo GX on your local network |
 | `VICTRON_MQTT_USE_SSL` | No | `false` | Connect over SSL on port 8883 instead of plain 1883 |
+| `VICTRON_MQTT_VERIFY_SSL` | No | `true` | Verify the Victron SSL certificate; set to `false` for self-signed certificates |
 | `KEEPALIVE_INTERVAL_SECONDS` | No | `60` | How often (in seconds) to send the keepalive signal |
 | `TOPIC_MAPPING` | Yes | n/a | JSON object mapping Victron paths to downstream topics (see below) |
 | `DOWNSTREAM_MQTT_HOST` | Yes | n/a | IP or hostname of the downstream broker |
@@ -174,6 +175,7 @@ Arguments:
 
 Options:
   --ssl               Use TLS/SSL on port 8883 (default: plain MQTT on port 1883).
+  --no-verify-ssl     Disable Victron TLS certificate verification.
   --topic TEXT        Relative Victron topic path to snapshot. Trailing '/'
                       subscribes to the whole branch. May be repeated.
                       [default: /]
